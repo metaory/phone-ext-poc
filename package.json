@@ -9,6 +9,7 @@
   "author": "metaory",
   "license": "ISC",
   "dependencies": {
+    "chalk": "^2.3.2",
     "inquirer": "^5.2.0"
   }
 }

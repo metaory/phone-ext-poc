@@ -1,29 +1,26 @@
 const inquirer = require('inquirer')
+const chalk = require('chalk')
 const response = require('./operators.res')
+const { log } = console
 
-const MIN_NUMBER_LEN = 5
+const MIN_NUMBER_LEN = 4
 
   !(function prompt() {
     inquirer
       .prompt([{
         type: 'input',
         name: 'number',
-        validate: (value, result) => isNaN(value) ? 'NOT_A_NUMBER' : !result.operator ? 'NO_OPERATOR_MATCHED' : value.length < MIN_NUMBER_LEN ? `NUMBER_LENGTH : number must be more than ${MIN_NUMBER_LEN} digits` : true,
+        validate: (value, result) => isNaN(value) ? 'NaN' : value.length < MIN_NUMBER_LEN ? `LENGTH < ${MIN_NUMBER_LEN}` : !result.operator.operatorId ? 'NO_MATCH' : true,
         message: 'enter phone number',
         transformer: (value, result) => {
-          if (!value) return value
-          process.stdout.write('\033c')
-          result.operator = search(value)
-          console.log('::', isNaN(value) ? 'NOT_A_NUMBER' : result.operator ? result.operator.operatorName : '-')
+          const { operatorName, operatorId } = result.operator = search(value)
+          isNaN(value) && log('\n' + chalk.red('NaN'))
+          log(chalk[operatorId ? 'green' : 'red'](operatorName || value && 'NO_MATCH' || ''))
           return value
         }
       }])
-      .then(result => {
-        console.log(JSON.stringify(result, null, 2))
-        prompt()
-      })
+      .then(prompt)
   })()
-
 
 /**
  * Find Operator
@@ -31,12 +28,14 @@ const MIN_NUMBER_LEN = 5
  * @return {object}
  * */
 function search(input) {
-  input = input.replace(/^0/, '')
+  if (isNaN(input)) return {}
+
+  const number = input.replace(/^0/, '')
   let operatorId = null
   let subset = response.dictionary
 
-  for (const char of input) {
-    subset = subset[char] || false
+  for (const digit of number) {
+    subset = subset[digit] || false
     if (!subset) operatorId = null
     if (typeof subset === 'string') {
       operatorId = subset
@@ -44,13 +43,14 @@ function search(input) {
     }
   }
 
-  if (typeof response.dictionary[input] === 'string') {
-    operatorId = response.dictionary[input]
+  if (typeof response.dictionary[number] === 'string') {
+    operatorId = response.dictionary[number]
   }
 
-  const operator = response.operatorList.find(x => x.operatorId == operatorId) || null
+  const operator = response.operatorList.find(x => x.operatorId == operatorId) || {}
 
-  console.log(JSON.stringify({ input, next_digit: operator ? '*' : Object.keys(subset), result: operator }, null, 2))
+  log(chalk.gray('\n---------------------------------------------------------'))
+  log(JSON.stringify({ number, possible_next: operatorId ? '*' : Object.keys(subset), operator }, null, 2))
 
   return operator
 }
