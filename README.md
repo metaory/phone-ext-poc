@@ -2,6 +2,8 @@
 
 Dummy Phone Number Extension Finder
 
-`yarn`
+`npm install`
 
-`yarn start`
+`npm start`
+
+![cli](./gifcast_211122151406.gif)
